@@ -35,6 +35,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private AudioClip jumpClip;
     [SerializeField] private AudioClip landClip;
 
+    [Header("Взаємодія")]
+    [SerializeField] private Transform interactPoint;
+    [SerializeField, Range(0.2f, 1.5f)] private float interactRadius = 0.6f;
+    [SerializeField] private LayerMask interactableLayer;
+
     private static readonly int SpeedHash = Animator.StringToHash("Speed");
 
     private Rigidbody2D body;
@@ -86,6 +91,9 @@ public class PlayerController : MonoBehaviour
             coyoteCounter = 0f;
         }
 
+        if (controls.Player.Interact.WasPressedThisFrame())
+            TryInteract();
+
         moveInput = controls.Player.Move.ReadValue<Vector2>().x;
         UpdateVisuals();
     }
@@ -116,6 +124,17 @@ public class PlayerController : MonoBehaviour
             sfxSource.PlayOneShot(jumpClip);
     }
 
+    private void TryInteract()
+    {
+        if (interactPoint == null) return;
+
+        Collider2D hit = Physics2D.OverlapCircle(
+            interactPoint.position, interactRadius, interactableLayer);
+
+        if (hit != null && hit.TryGetComponent(out IInteractable target))
+            target.Interact();
+    }
+
     private void UpdateVisuals()
     {
         animator.SetFloat(SpeedHash, Mathf.Abs(body.linearVelocity.x));
@@ -129,8 +148,16 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (groundCheck == null) return;
-        Gizmos.color = Application.isPlaying && isGrounded ? Color.green : Color.red;
-        Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        if (groundCheck != null)
+        {
+            Gizmos.color = Application.isPlaying && isGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+        }
+
+        if (interactPoint != null)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(interactPoint.position, interactRadius);
+        }
     }
 }
