@@ -65,6 +65,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (PauseMenu.IsPaused) return;
+
         wasGrounded = isGrounded;
         isGrounded = CheckGround();
 
